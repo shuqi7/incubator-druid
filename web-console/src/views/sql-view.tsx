@@ -16,12 +16,12 @@
  * limitations under the License.
  */
 
-import * as Hjson from "hjson";
+import * as Hjson from 'hjson';
 import * as React from 'react';
-import ReactTable from "react-table";
+import ReactTable from 'react-table';
 
 import { SqlControl } from '../components/sql-control';
-import { QueryPlanDialog } from "../dialogs/query-plan-dialog";
+import { QueryPlanDialog } from '../dialogs/query-plan-dialog';
 import {
   BasicQueryExplanation,
   decodeRune,
@@ -33,7 +33,7 @@ import {
   SemiJoinQueryExplanation
 } from '../utils';
 
-import "./sql-view.scss";
+import './sql-view.scss';
 
 export interface SqlViewProps extends React.Props<any> {
   initSql: string | null;
@@ -81,15 +81,14 @@ export class SqlView extends React.Component<SqlViewProps, SqlViewState> {
         if (query.trim().startsWith('{')) {
           // Secret way to issue a native JSON "rune" query
           const runeQuery = Hjson.parse(query);
-          const result = await queryDruidRune(runeQuery);
           return {
-            queryResult: decodeRune(runeQuery, result),
+            queryResult: decodeRune(runeQuery, await queryDruidRune(runeQuery)),
             queryElapsed: new Date().valueOf() - startTime.valueOf()
           };
         } else {
           const result = await queryDruidSql({
             query,
-            resultFormat: "array",
+            resultFormat: 'array',
             header: true
           });
           return {
@@ -116,9 +115,9 @@ export class SqlView extends React.Component<SqlViewProps, SqlViewState> {
         const explainQuery = `explain plan for ${query}`;
         const result = await queryDruidSql({
           query: explainQuery,
-          resultFormat: "object"
+          resultFormat: 'object'
         });
-        const data: BasicQueryExplanation | SemiJoinQueryExplanation | string = parseQueryPlan(result[0]["PLAN"]);
+        const data: BasicQueryExplanation | SemiJoinQueryExplanation | string = parseQueryPlan(result[0]['PLAN']);
         return data;
       },
       onStateChange: ({ result, loading, error }) => {
@@ -167,7 +166,7 @@ export class SqlView extends React.Component<SqlViewProps, SqlViewState> {
       sortable={false}
       columns={(result ? result.header : []).map((h: any, i) => ({ Header: h, accessor: String(i) }))}
       defaultPageSize={10}
-      className="-striped -highlight"
+      className='-striped -highlight'
     />;
   }
 
@@ -175,7 +174,7 @@ export class SqlView extends React.Component<SqlViewProps, SqlViewState> {
     const { initSql } = this.props;
     const { queryElapsed } = this.state;
 
-    return <div className="sql-view app-view">
+    return <div className='sql-view app-view'>
       <SqlControl
         initSql={initSql || localStorageGet(LocalStorageKeys.QUERY_KEY)}
         onRun={q => {
