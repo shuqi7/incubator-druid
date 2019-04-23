@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-import { Alert, Button, ButtonGroup, Intent, Label } from '@blueprintjs/core';
+import {Alert, Button, ButtonGroup, Card, Icon, Intent, Label} from '@blueprintjs/core';
 import { IconNames } from '@blueprintjs/icons';
 import axios from 'axios';
 import * as classNames from 'classnames';
@@ -28,6 +28,7 @@ import { TableColumnSelection } from '../components/table-column-selection';
 import { ViewControlBar } from '../components/view-control-bar';
 import { AsyncActionDialog } from '../dialogs/async-action-dialog';
 import { SpecDialog } from '../dialogs/spec-dialog';
+import {TableActionDialog, TableActionDialogMetaData} from '../dialogs/table-action-dialog';
 import { AppToaster } from '../singletons/toaster';
 import {
   addFilter,
@@ -71,6 +72,8 @@ export interface TasksViewState {
   supervisorSpecDialogOpen: boolean;
   taskSpecDialogOpen: boolean;
   alertErrorMsg: string | null;
+
+  tableActionDialogMetaData: TableActionDialogMetaData | null;
 }
 
 function statusToColor(status: string): string {
@@ -113,8 +116,9 @@ export class TasksView extends React.Component<TasksViewProps, TasksViewState> {
 
       supervisorSpecDialogOpen: false,
       taskSpecDialogOpen: false,
-      alertErrorMsg: null
+      alertErrorMsg: null,
 
+      tableActionDialogMetaData: null
     };
 
     this.supervisorTableColumnSelectionHandler = new TableColumnSelectionHandler(
@@ -382,23 +386,25 @@ ORDER BY "rank" DESC, "created_time" DESC`);
             Header: 'Actions',
             id: 'actions',
             accessor: 'id',
-            width: 420,
             filterable: false,
             Cell: row => {
               const id = row.value;
-              const suspendResume = row.original.spec.suspended ?
-                <a onClick={() => this.setState({ resumeSupervisorId: id })}>Resume</a> :
-                <a onClick={() => this.setState({ suspendSupervisorId: id })}>Suspend</a>;
 
-              return <div>
-                <a href={`/druid/indexer/v1/supervisor/${id}`} target="_blank">Payload</a>&nbsp;&nbsp;&nbsp;
-                <a href={`/druid/indexer/v1/supervisor/${id}/status`} target="_blank">Status</a>&nbsp;&nbsp;&nbsp;
-                <a href={`/druid/indexer/v1/supervisor/${id}/stats`} target="_blank">Stats</a>&nbsp;&nbsp;&nbsp;
-                <a href={`/druid/indexer/v1/supervisor/${id}/history`} target="_blank">History</a>&nbsp;&nbsp;&nbsp;
-                {suspendResume}&nbsp;&nbsp;&nbsp;
-                <a onClick={() => this.setState({ resetSupervisorId: id })}>Reset</a>&nbsp;&nbsp;&nbsp;
-                <a onClick={() => this.setState({ terminateSupervisorId: id })}>Terminate</a>
-              </div>;
+              const metaData: TableActionDialogMetaData = {
+                id,
+                mode: 'supervisor',
+                supervisorSuspended: row.original.spec.suspended,
+                status: null
+              };
+
+              return <span
+                className={'action-icon'}
+                onClick={() => this.setState({
+                  tableActionDialogMetaData: metaData
+                })}
+              >
+                <Icon icon={`zoom-in`}/>
+              </span>;
             },
             show: supervisorTableColumnSelectionHandler.showColumn('Actions')
           }
@@ -543,20 +549,25 @@ ORDER BY "rank" DESC, "created_time" DESC`);
             Header: 'Actions',
             id: 'actions',
             accessor: 'task_id',
-            width: 360,
             filterable: false,
             Cell: row => {
               if (row.aggregated) return '';
               const id = row.value;
               const { status } = row.original;
-              return <div>
-                <a href={`/druid/indexer/v1/task/${id}`} target="_blank">Payload</a>&nbsp;&nbsp;&nbsp;
-                <a href={`/druid/indexer/v1/task/${id}/status`} target="_blank">Status</a>&nbsp;&nbsp;&nbsp;
-                <a href={`/druid/indexer/v1/task/${id}/reports`} target="_blank">Reports</a>&nbsp;&nbsp;&nbsp;
-                <a href={`/druid/indexer/v1/task/${id}/log`} target="_blank">Log (all)</a>&nbsp;&nbsp;&nbsp;
-                <a href={`/druid/indexer/v1/task/${id}/log?offset=-8192`} target="_blank">Log (last 8kb)</a>&nbsp;&nbsp;&nbsp;
-                {(status === 'RUNNING' || status === 'WAITING' || status === 'PENDING') && <a onClick={() => this.setState({ killTaskId: id })}>Kill</a>}
-              </div>;
+              const metaData: TableActionDialogMetaData = {
+                id,
+                mode: 'task',
+                supervisorSuspended: null,
+                status
+              };
+              return <span
+                className={'action-icon'}
+                onClick={() => this.setState({
+                    tableActionDialogMetaData: metaData
+                  })}
+              >
+                <Icon icon={`zoom-in`}/>
+              </span>;
             },
             Aggregated: row => '',
             show: taskTableColumnSelectionHandler.showColumn('Actions')
@@ -571,7 +582,7 @@ ORDER BY "rank" DESC, "created_time" DESC`);
 
   render() {
     const { goToSql } = this.props;
-    const { groupTasksBy, supervisorSpecDialogOpen, taskSpecDialogOpen, alertErrorMsg } = this.state;
+    const { groupTasksBy, supervisorSpecDialogOpen, taskSpecDialogOpen, alertErrorMsg, tableActionDialogMetaData } = this.state;
     const { supervisorTableColumnSelectionHandler, taskTableColumnSelectionHandler } = this;
 
     return <div className="tasks-view app-view">
@@ -645,6 +656,16 @@ ORDER BY "rank" DESC, "created_time" DESC`);
       >
         <p>{alertErrorMsg}</p>
       </Alert>
+      {tableActionDialogMetaData &&
+        <TableActionDialog
+          onClose={() => this.setState({tableActionDialogMetaData: null})}
+          metaData={tableActionDialogMetaData}
+          terminateSupervisor={(id: string) => this.setState({ terminateSupervisorId: id })}
+          resetSupervisor={(id: string) => this.setState({ resetSupervisorId: id })}
+          resumeSupervisor={(id: string) => this.setState({ resumeSupervisorId: id })}
+          suspendSupervisor={(id: string) => this.setState({ suspendSupervisorId: id })}
+          killTask={(id: string) => this.setState({ killTaskId: id })}
+        />}
     </div>;
   }
 }
