@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-import {Alert, Button, ButtonGroup, Card, Icon, Intent, Label} from '@blueprintjs/core';
+import {Alert, Button, ButtonGroup, Card, Dialog, Icon, Intent, Label} from '@blueprintjs/core';
 import { IconNames } from '@blueprintjs/icons';
 import axios from 'axios';
 import * as React from 'react';
@@ -708,22 +708,24 @@ ORDER BY "rank" DESC, "created_time" DESC`);
         <p>{alertErrorMsg}</p>
       </Alert>
       {
-        taskTableActionDialogMetaData &&
-        <TaskTableActionDialog
-          onClose={() => this.setState({taskTableActionDialogMetaData: null})}
-          metaData={taskTableActionDialogMetaData}
-          killTask={(id: string) => this.setState({ killTaskId: id })}
-        />
-      }
-      {
         supervisorTableActionDialogMetaData &&
         <SupervisorTableActionDialog
+          isOpen
           onClose={() => this.setState({supervisorTableActionDialogMetaData: null})}
           metaData={supervisorTableActionDialogMetaData}
           terminateSupervisor={(id: string) => this.setState({ terminateSupervisorId: id })}
           resetSupervisor={(id: string) => this.setState({ resetSupervisorId: id })}
           resumeSupervisor={(id: string) => this.setState({ resumeSupervisorId: id })}
           suspendSupervisor={(id: string) => this.setState({ suspendSupervisorId: id })}
+        />
+      }
+      {
+        taskTableActionDialogMetaData &&
+        <TaskTableActionDialog
+          isOpen
+          onClose={() => this.setState({taskTableActionDialogMetaData: null})}
+          metaData={taskTableActionDialogMetaData}
+          killTask={(id: string) => this.setState({ killTaskId: id })}
         />
       }
     </div>;
