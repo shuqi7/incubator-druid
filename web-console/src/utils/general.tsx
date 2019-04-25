@@ -18,6 +18,7 @@
 
 import { Button, HTMLSelect, InputGroup, Intent } from '@blueprintjs/core';
 import { IconNames } from '@blueprintjs/icons';
+import * as FileSaver from 'file-saver';
 import * as numeral from 'numeral';
 import * as React from 'react';
 import { Filter, FilterRender } from 'react-table';
@@ -196,4 +197,13 @@ export function parseStringToJSON(s: string): JSON | null {
   } else {
     return JSON.parse(s);
   }
+}
+
+// ----------------------------
+
+export function downloadFile(text: string, type: string, fileName: string): void {
+  const blob = new Blob([text], {
+    type: `text/${type}`
+  });
+  FileSaver.saveAs(blob, fileName);
 }
