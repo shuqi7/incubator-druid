@@ -537,7 +537,7 @@ ORDER BY "rank" DESC, "created_time" DESC`);
             Header: 'Status',
             id: 'status',
             width: 110,
-            accessor: (row) => { return {status: row.status, created_time: row.created_time}; },
+            accessor: (row) => row.status,
             Cell: row => {
               if (row.aggregated) return '';
               const { status, location } = row.original;
@@ -567,10 +567,7 @@ ORDER BY "rank" DESC, "created_time" DESC`);
             },
             sortMethod: (d1, d2) => {
               const statusRanking: any = TasksView.statusRanking;
-              return statusRanking[d1.status] - statusRanking[d2.status] || d1.created_time.localeCompare(d2.created_time);
-            },
-            filterMethod: (filter: Filter, row: any) => {
-              return booleanCustomTableFilter(filter, row.status.status);
+              return statusRanking[d1] - statusRanking[d2];
             },
             show: taskTableColumnSelectionHandler.showColumn('Status')
           },
